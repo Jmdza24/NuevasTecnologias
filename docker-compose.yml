@@ -1,0 +1,45 @@
+
+services:
+  app:
+    build: .
+    container_name: laravel_app
+    restart: unless-stopped
+    volumes:
+      - .:/var/www
+    networks:
+      - laravel
+
+  webserver:
+    image: nginx:latest
+    container_name: nginx_server
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - laravel
+
+  mysql:
+    image: mysql:8
+    container_name: mysql_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: laravel
+    volumes:
+      - dbdata:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - laravel
+
+networks:
+  laravel:
+
+volumes:
+  dbdata:
+# Fin del docker-compose.yml
