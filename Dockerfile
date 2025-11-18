@@ -8,27 +8,35 @@ RUN apt-get update && apt-get install -y \
     unzip \
     libonig-dev \
     libzip-dev \
-    libpng-dev
+    libpng-dev \
+    libxml2-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libssl-dev
 
-# Extensiones de PHP necesarias para Laravel
-RUN docker-php-ext-install pdo_mysql mbstring zip
+# Extensiones PHP requeridas por Laravel
+RUN docker-php-ext-install pdo_mysql mbstring zip bcmath
 
 # Instalar Composer dentro del contenedor
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copiar archivos del proyecto
-COPY . /var/www
-
-# Definir la carpeta de trabajo
+# Establecer directorio de trabajo
 WORKDIR /var/www
 
-# Instalar dependencias de Laravel
-RUN composer install --no-dev --optimize-autoloader
+# Copiar solo composer.* primero (optimiza cache)
+COPY composer.json composer.lock ./
 
-# Permisos
-RUN chown -R www-data:www-data /var/www
+# Instalar dependencias PHP sin dev
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
+# Copiar el resto del proyecto
+COPY . .
+
+# Dar permisos correctos
+RUN chown -R www-data:www-data /var/www \
+    && chmod -R 755 /var/www/storage /var/www/bootstrap/cache
+
+# Comando por defecto
 CMD ["php-fpm"]
 
 EXPOSE 9000
-# Fin del Dockerfile

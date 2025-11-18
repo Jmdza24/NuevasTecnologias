@@ -18,29 +18,33 @@ jobs:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: testing
         ports:
-          - 3306:3306
+          - "3306:3306"
         options: >-
           --health-cmd="mysqladmin ping -h localhost"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
+          --health-retries=5
 
     steps:
-
+    # Obtener el código del repo
     - uses: actions/checkout@v4
 
+    # Instalar PHP 8.3 con extensiones
     - uses: shivammathur/setup-php@v2
       with:
         php-version: '8.3'
         extensions: mbstring, intl, pdo_mysql, bcmath
         coverage: none
 
+    # Crear .env si no existe
     - name: Copy .env
       run: php -r "file_exists('.env') || copy('.env.example', '.env');"
 
+    # Instalar dependencias de Laravel
     - name: Install Dependencies
-      run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+      run: composer install --no-interaction --prefer-dist --no-scripts --no-progress
 
+    # Configurar variables de entorno
     - name: Configure Laravel Environment
       run: |
         php artisan key:generate
@@ -49,9 +53,11 @@ jobs:
         sed -i 's/DB_USERNAME=.*/DB_USERNAME=root/' .env
         sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=root/' .env
 
+    # Permisos
     - name: Permissions
       run: chmod -R 777 storage bootstrap/cache
 
+    # Esperar MySQL
     - name: Wait for MySQL to be Ready
       run: |
         for i in {1..30}; do
@@ -60,6 +66,7 @@ jobs:
           sleep 2
         done
 
+    # Migraciones
     - name: Run Migrations
       env:
         DB_CONNECTION: mysql
@@ -68,6 +75,7 @@ jobs:
         DB_PASSWORD: root
       run: php artisan migrate --force
 
+    # Tests
     - name: Run Tests
       env:
         DB_CONNECTION: mysql
@@ -76,6 +84,7 @@ jobs:
         DB_PASSWORD: root
       run: php artisan test
 
+    # Login GHCR
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
       with:
@@ -83,8 +92,11 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build and push
+    # Build + Push Docker
+    - name: Build and push Docker image
       uses: docker/build-push-action@v6
       with:
+        context: .
+        file: ./Dockerfile
         push: true
-        tags: ghcr.io/jmdza24/nuevastecnologias:latest 
+        tags: ghcr.io/jmdza24/gestortickets:latest
