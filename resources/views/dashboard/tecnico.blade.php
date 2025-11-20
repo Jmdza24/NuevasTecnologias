@@ -16,7 +16,7 @@
 
     <hr class="my-4">
 
-    <h4 class="fw-bold">📌 Mis tickets recientes</h4>
+    <h4 class="fw-bold">📌 Mis tickets asignados</h4>
 
     <ul class="list-group">
         @foreach($misTickets as $t)
