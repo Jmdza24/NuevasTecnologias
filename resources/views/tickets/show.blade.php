@@ -1,90 +1,81 @@
 @extends('layouts.app')
 
-@section('title', 'Detalle del Ticket')
-
 @section('content')
 <div class="container mt-5">
 
-    <a href="{{ route('tickets.index') }}" class="btn btn-secondary mb-3">Volver</a>
+    <h2 class="fw-bold mb-4">
+        <i class="bi bi-ticket-detailed"></i> Ticket #{{ $ticket->id }}
+    </h2>
 
-    <div class="card shadow-sm">
-        <div class="card-header fw-bold">
-            Ticket #{{ $ticket->id }} - {{ $ticket->subject }}
+    <div class="row">
+
+        <!-- Columna izquierda: info -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white fw-bold">
+                    Información del Ticket
+                </div>
+                <div class="card-body">
+
+                    <p><strong>Asunto:</strong> {{ $ticket->subject }}</p>
+
+                    <p><strong>Descripción:</strong><br>
+                        {{ $ticket->description }}
+                    </p>
+
+                    <p><strong>Estado:</strong><br>
+                        <span class="badge bg-{{ $colors[$ticket->status] ?? 'dark' }} px-3 py-2">
+                            {{ $labels[$ticket->status] ?? $ticket->status }}
+                        </span>
+                    </p>
+
+                    <p><strong>Cliente:</strong> {{ $ticket->creator->name }}</p>
+
+                    <p><strong>Técnico asignado:</strong>
+                        {{ $ticket->technician->name ?? 'Sin asignar' }}
+                    </p>
+
+                    <p><strong>Creado:</strong> {{ $ticket->created_at->format('d/m/Y H:i') }}</p>
+
+                    @if($ticket->closed_at)
+                        <p><strong>Cerrado:</strong> {{ $ticket->closed_at->format('d/m/Y H:i') }}</p>
+                    @endif
+
+                    <hr>
+
+                    <!-- Acciones -->
+                    @include('tickets.partials.actions')
+
+                </div>
+            </div>
         </div>
 
-        <div class="card-body">
-
-            <p><strong>Descripción:</strong></p>
-            <p>{{ $ticket->description }}</p>
-
-            <hr>
-
-            <p><strong>Estado:</strong> 
-                <span class="badge bg-primary">
-                    {{ $ticket->status }}
-                </span>
-            </p>
-
-            <p><strong>Cliente:</strong> {{ $ticket->creator->name }}</p>
-
-            <p><strong>Técnico asignado:</strong> 
-                {{ $ticket->technician->name ?? 'Sin asignar' }}
-            </p>
-
-            <p><strong>Creado el:</strong> 
-                {{ $ticket->created_at->format('d/m/Y') }}
-            </p>
-
-            @if($ticket->closed_at)
-                <p><strong>Cerrado el:</strong> 
-                    {{ $ticket->closed_at->format('d/m/Y') }}
-                </p>
-            @endif
-
-            <hr>
-
-            {{-- Acciones según rol --}}
-            <div class="mt-3">
-
-                {{-- Cliente puede cerrar ticket --}}
-                @if($user->role === 'cliente' && $ticket->status !== 'closed')
-                    <form action="{{ route('tickets.close', $ticket) }}" method="POST" class="d-inline">
-                        @csrf
-                        <button class="btn btn-success">
-                            Cerrar Ticket
-                        </button>
-                    </form>
-                @endif
-
-                {{-- Técnico puede editar / cambiar estado --}}
-                @if($user->role === 'tecnico')
-                    <a href="{{ route('tickets.edit', $ticket) }}" class="btn btn-warning">
-                        Actualizar Estado
-                    </a>
-                @endif
-
-                {{-- Admin puede editar o eliminar --}}
-                @if($user->role === 'admin')
-                    <a href="{{ route('tickets.edit', $ticket) }}" class="btn btn-warning">
-                        Editar Ticket
-                    </a>
-
-                    <form action="{{ route('tickets.destroy', $ticket) }}" 
-                          method="POST"
-                          class="d-inline">
-                        @csrf
-                        @method('DELETE')
-                        <button class="btn btn-danger"
-                                onclick="return confirm('¿Seguro que deseas eliminar este ticket?')">
-                            Eliminar
-                        </button>
-                    </form>
-                @endif
-
+        <!-- Columna derecha: historial -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white fw-bold">
+                    Historial de Actividad
+                </div>
+                <div class="card-body">
+                    @if($ticket->logs->isEmpty())
+                        <p>No hay actividad registrada.</p>
+                    @else
+                        <ul class="list-group">
+                            @foreach($ticket->logs as $log)
+                                <li class="list-group-item">
+                                    <strong>{{ $log->action }}</strong><br>
+                                    <small>{{ $log->description }}</small><br>
+                                    <small class="text-muted">
+                                        Por: {{ $log->user->name }} — 
+                                        {{ $log->created_at->format('d/m/Y H:i') }}
+                                    </small>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </div>
             </div>
-
         </div>
     </div>
-
 </div>
 @endsection

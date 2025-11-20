@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\TicketController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,21 +39,16 @@ Route::post('/logout', [AuthController::class, 'logout'])
 */
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
+
     Route::get('/dashboard/admin', function () {
         return view('dashboard.admin');
     })->name('admin.dashboard');
 
-    // Ver todos los tickets
+    // Tickets del admin
     Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
-
-    // Ver detalle
     Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
-
-    // Asignar o editar ticket
     Route::get('/tickets/{ticket}/edit', [TicketController::class, 'edit'])->name('tickets.edit');
     Route::put('/tickets/{ticket}', [TicketController::class, 'update'])->name('tickets.update');
-
-    // Eliminar ticket
     Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy'])->name('tickets.destroy');
 });
 
@@ -63,19 +59,17 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 */
 
 Route::middleware(['auth', 'role:tecnico'])->group(function () {
+
     Route::get('/dashboard/tecnico', function () {
         return view('dashboard.tecnico');
     })->name('tecnico.dashboard');
 
-    // Ver tickets asignados o disponibles
+    // Tickets del técnico
     Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
-
-    // Ver detalle
     Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
-
-    // Editar ticket (cambiar estado)
     Route::get('/tickets/{ticket}/edit', [TicketController::class, 'edit'])->name('tickets.edit');
     Route::put('/tickets/{ticket}', [TicketController::class, 'update'])->name('tickets.update');
+    Route::post('/tickets/{ticket}/take', [TicketController::class, 'take'])->name('tickets.take');
 });
 
 /*
@@ -85,20 +79,15 @@ Route::middleware(['auth', 'role:tecnico'])->group(function () {
 */
 
 Route::middleware(['auth', 'role:cliente'])->group(function () {
+
     Route::get('/dashboard/cliente', function () {
         return view('dashboard.cliente');
     })->name('cliente.dashboard');
 
-    // Listar mis tickets
+    // Tickets del cliente
     Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
-
-    // Crear ticket
     Route::get('/tickets/create', [TicketController::class, 'create'])->name('tickets.create');
     Route::post('/tickets', [TicketController::class, 'store'])->name('tickets.store');
-
-    // Ver detalle
     Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
-
-    // Cerrar ticket
     Route::post('/tickets/{ticket}/close', [TicketController::class, 'close'])->name('tickets.close');
 });

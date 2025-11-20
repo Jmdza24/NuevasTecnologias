@@ -29,4 +29,11 @@ class Ticket extends Model
     {
         return $this->belongsTo(User::class, 'assigned_to');
     }
+
+    // Un ticket puede tener muchos registros de actividad
+    public function logs()
+    {
+        return $this->hasMany(TicketLog::class);
+}
+
 }
